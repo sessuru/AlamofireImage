@@ -23,8 +23,8 @@ AlamofireImage is an image component library for Alamofire.
 
 ## Requirements
 
-- iOS 8.0+ / Mac OS X 10.9+ / watchOS 2
-- Xcode 7.0+
+- iOS 8.0+ / Mac OS X 10.9+ / tvOS 9.0+ / watchOS 2.0+
+- Xcode 7.1+
 
 ## Migration Guides
 
@@ -46,13 +46,13 @@ AlamofireImage is an image component library for Alamofire.
 
 ### CocoaPods
 
-[CocoaPods](http://cocoapods.org) is a dependency manager for Cocoa projects.
-
-CocoaPods 0.38.2 is required to build AlamofireImage. It adds support for Xcode 7, Swift 2.0 and embedded frameworks. You can install it with the following command:
+[CocoaPods](http://cocoapods.org) is a dependency manager for Cocoa projects. You can install it with the following command:
 
 ```bash
 $ gem install cocoapods
 ```
+
+> CocoaPods 0.39.0+ is required to build Alamofire 3.0.0+.
 
 To integrate AlamofireImage into your Xcode project using CocoaPods, specify it in your `Podfile`:
 
@@ -61,7 +61,7 @@ source 'https://github.com/CocoaPods/Specs.git'
 platform :ios, '8.0'
 use_frameworks!
 
-pod 'AlamofireImage', '~> 1.0'
+pod 'AlamofireImage', '~> 2.0'
 ```
 
 Then, run the following command:
@@ -72,7 +72,7 @@ $ pod install
 
 ### Carthage
 
-[Carthage](https://github.com/Carthage/Carthage) is a decentralized dependency manager that automates the process of adding frameworks to your Cocoa application.
+[Carthage](https://github.com/Carthage/Carthage) is a decentralized dependency manager that builds your dependencies and provides you with binary frameworks.
 
 You can install Carthage with [Homebrew](http://brew.sh/) using the following command:
 
@@ -84,7 +84,7 @@ $ brew install carthage
 To integrate AlamofireImage into your Xcode project using Carthage, specify it in your `Cartfile`:
 
 ```ogdl
-github "Alamofire/AlamofireImage" ~> 1.0
+github "Alamofire/AlamofireImage" ~> 2.0
 ```
 
 ---
@@ -123,7 +123,7 @@ The AlamofireImage response image serializers support a wide range of image type
 - `image/x-xbitmap`
 - `image/x-win-bitmap`
 
-> Support for other image types will continue to be added as the library matures. Pull requests welcome!
+> If the image you are attempting to download is an invalid MIME type not in the list, you can add custom acceptable content types using the `addAcceptableImageContentTypes` extension on the `Request` type.
 
 ### UIImage Extensions
 
@@ -246,11 +246,11 @@ let imageCache = AutoPurgingImageCache(
 )
 ```
 
-The `AutoPurgingImageCache` in AlamofireImage fills the roll of that additional caching layer. It is an in-memory image cache used to store images up to a given memory capacity. When the memory capacity is reached, the image cache is sorted by last access date, then the oldest image is continuously purged until the preferred memory usage after purge is met. Each time an image is accessed through the cache, the internal access date of the image is updated.
+The `AutoPurgingImageCache` in AlamofireImage fills the role of that additional caching layer. It is an in-memory image cache used to store images up to a given memory capacity. When the memory capacity is reached, the image cache is sorted by last access date, then the oldest image is continuously purged until the preferred memory usage after purge is met. Each time an image is accessed through the cache, the internal access date of the image is updated.
 
 #### Add / Remove / Fetch Images
 
-Interacting with the `ImageCache` protocol APIs is very straight-forward.
+Interacting with the `ImageCache` protocol APIs is very straightforward.
 
 ```swift
 let imageCache = AutoPurgingImageCache()
@@ -347,6 +347,8 @@ downloader.downloadImage(URLRequest: URLRequest) { response in
     }
 }
 ```
+
+> Make sure to keep a strong reference to the `ImageDownloader` instance, otherwise the `completion` closure will not be called because the `downloader` reference will go out of scope before the `completion` closure can be called.
 
 #### Applying an ImageFilter
 
