@@ -1,4 +1,4 @@
-// AlamofireImage.h
+// Package.swift
 //
 // Copyright (c) 2015-2016 Alamofire Software Foundation (http://alamofire.org/)
 //
@@ -20,7 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#import <Foundation/Foundation.h>
+import PackageDescription
 
-FOUNDATION_EXPORT double AlamofireImageVersionNumber;
-FOUNDATION_EXPORT const unsigned char AlamofireImageVersionString[];
+let package = Package(
+    name: "AlamofireImage",
+    dependencies: [
+        .Package(url: "https://github.com/Alamofire/Alamofire.git", versions: Version(3, 1, 5)..<Version(4, 0, 0))
+    ]
+)

@@ -1,6 +1,6 @@
 // UIImageViewTests.swift
 //
-// Copyright (c) 2015 Alamofire Software Foundation (http://alamofire.org/)
+// Copyright (c) 2015-2016 Alamofire Software Foundation (http://alamofire.org/)
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,6 @@ import UIKit
 import XCTest
 
 private class TestImageView: UIImageView {
-    let imageKeyPath = "image"
-    var kvoContext: UInt8 = 1
     var imageObserver: (Void -> Void)?
 
     convenience init(imageObserver: (Void -> Void)? = nil) {
@@ -38,24 +36,18 @@ private class TestImageView: UIImageView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        addObserver(self, forKeyPath: imageKeyPath, options: NSKeyValueObservingOptions.New, context: &kvoContext)
     }
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    deinit {
-        removeObserver(self, forKeyPath: imageKeyPath, context: &kvoContext)
-    }
-
-    override func observeValueForKeyPath(
-        keyPath: String?,
-        ofObject object: AnyObject?,
-        change: [String: AnyObject]?,
-        context: UnsafeMutablePointer<Void>)
-    {
-        if context == &kvoContext {
+    override var image: UIImage? {
+        get {
+            return super.image
+        }
+        set {
+            super.image = newValue
             imageObserver?()
         }
     }
@@ -132,11 +124,12 @@ class UIImageViewTestCase: BaseTestCase {
 
         // Then
         XCTAssertTrue(imageDownloadComplete, "image download complete should be true")
+        XCTAssertNil(imageView.af_activeRequestReceipt, "active request receipt should be nil after download completes")
     }
 
     // MARK: - Image Downloaders
 
-    func testThatInstanceImageDownloaderOverridesSharedImageDownloader() {
+    func testThatImageDownloaderOverridesSharedImageDownloader() {
         // Given
         let expectation = expectationWithDescription("image should download successfully")
         var imageDownloadComplete = false
@@ -627,6 +620,49 @@ class UIImageViewTestCase: BaseTestCase {
         XCTAssertTrue(result?.isSuccess ?? false, "result should be a success case")
     }
 
+    func testThatActiveRequestCanBeCancelledAndRestartedSuccessfully() {
+        // Given
+        let imageView = UIImageView()
+        let expectation = expectationWithDescription("image download should succeed")
+
+        var completion1Called = false
+        var completion2Called = false
+        var result: Result<UIImage, NSError>?
+
+        // When
+        imageView.af_setImageWithURLRequest(
+            NSURLRequest(URL: URL),
+            placeholderImage: nil,
+            filter: nil,
+            imageTransition: .None,
+            completion: { _ in
+                completion1Called = true
+            }
+        )
+
+        imageView.af_cancelImageRequest()
+
+        imageView.af_setImageWithURLRequest(
+            NSURLRequest(URL: URL),
+            placeholderImage: nil,
+            filter: nil,
+            imageTransition: .None,
+            completion: { closureResponse in
+                completion2Called = true
+                result = closureResponse.result
+                expectation.fulfill()
+            }
+        )
+
+        waitForExpectationsWithTimeout(timeout, handler: nil)
+
+        // Then
+        XCTAssertTrue(completion1Called, "completion 1 called should be true")
+        XCTAssertTrue(completion2Called, "completion 2 called should be true")
+        XCTAssertNotNil(imageView.image, "image view image should not be nil when completion handler is not nil")
+        XCTAssertTrue(result?.isSuccess ?? false, "result should be a success case")
+    }
+
     // MARK: - Redirects
 
     func testThatImageBehindRedirectCanBeDownloaded() {
@@ -649,5 +685,24 @@ class UIImageViewTestCase: BaseTestCase {
         // Then
         XCTAssertTrue(imageDownloadComplete, "image download complete should be true")
         XCTAssertNotNil(imageView.image, "image view image should not be nil")
+    }
+
+    // MARK: - Accept Header
+
+    func testThatAcceptHeaderMatchesAcceptableContentTypes() {
+        // Given
+        let imageView = UIImageView()
+
+        // When
+        imageView.af_setImageWithURL(URL)
+        let acceptField = imageView.af_activeRequestReceipt?.request.request?.allHTTPHeaderFields?["Accept"]
+        imageView.af_cancelImageRequest()
+
+        // Then
+        XCTAssertNotNil(acceptField)
+
+        if let acceptField = acceptField {
+            XCTAssertEqual(acceptField, Request.acceptableImageContentTypes.joinWithSeparator(","))
+        }
     }
 }

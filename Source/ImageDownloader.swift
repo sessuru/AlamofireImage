@@ -1,6 +1,6 @@
 // ImageDownloader.swift
 //
-// Copyright (c) 2015 Alamofire Software Foundation (http://alamofire.org/)
+// Copyright (c) 2015-2016 Alamofire Software Foundation (http://alamofire.org/)
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -245,7 +245,12 @@ public class ImageDownloader {
         completion: CompletionHandler?)
         -> RequestReceipt?
     {
-        return downloadImage(URLRequest: URLRequest, filter: nil, completion: completion)
+        return downloadImage(
+            URLRequest: URLRequest,
+            receiptID: NSUUID().UUIDString,
+            filter: nil,
+            completion: completion
+        )
     }
 
     /**
@@ -275,8 +280,22 @@ public class ImageDownloader {
         completion: CompletionHandler?)
         -> RequestReceipt?
     {
+        return downloadImage(
+            URLRequest: URLRequest,
+            receiptID: NSUUID().UUIDString,
+            filter: filter,
+            completion: completion
+        )
+    }
+
+    func downloadImage(
+        URLRequest URLRequest: URLRequestConvertible,
+        receiptID: String,
+        filter: ImageFilter?,
+        completion: CompletionHandler?)
+        -> RequestReceipt?
+    {
         var request: Request!
-        let receiptID = NSUUID().UUIDString
 
         dispatch_sync(synchronizationQueue) {
             // 1) Append the filter and completion handler to a pre-existing request if it already exists
